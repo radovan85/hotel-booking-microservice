@@ -1,0 +1,18 @@
+# Routes
+
+#Categories
+GET  /api/categories    com.radovan.play.controllers.RoomCategoryController.getAllCategories
+POST   /api/categories    com.radovan.play.controllers.RoomCategoryController.saveCategory(request:Request)
+GET   /api/categories/:id    com.radovan.play.controllers.RoomCategoryController.getCategoryDetails(id:Integer)
+PUT   /api/categories/:id    com.radovan.play.controllers.RoomCategoryController.updateCategory(request:Request,id:Integer)
+DELETE   /api/categories/:id    com.radovan.play.controllers.RoomCategoryController.deleteCategory(id:Integer)
+
+#Rooms
+GET    /api/rooms     com.radovan.play.controllers.RoomController.getAllRooms
+POST   /api/rooms     com.radovan.play.controllers.RoomController.saveRoom(request:Request)
+GET    /api/rooms/:id      com.radovan.play.controllers.RoomController.getRoomDetails(id:Integer)
+PUT    /api/rooms/:id      com.radovan.play.controllers.RoomController.updateRoom(request:Request,id:Integer)
+DELETE    /api/rooms/:id    com.radovan.play.controllers.RoomController.deleteRoom(id:Integer)
+
+#Health
+GET     /api/health     com.radovan.play.controllers.HealthController.healthCheck(request:Request)

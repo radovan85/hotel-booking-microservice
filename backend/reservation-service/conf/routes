@@ -1,0 +1,23 @@
+# Routes
+POST    /api/reservations/provideReservations      com.radovan.play.controllers.ReservationController.provideReservations(request:Request)
+POST   /api/reservations/book     com.radovan.play.controllers.ReservationController.addReservation(request: Request)
+GET    /api/reservations/me       com.radovan.play.controllers.ReservationController.provideMyReservations(request:Request)
+GET    /api/reservations    com.radovan.play.controllers.ReservationController.getAllReservations
+GET    /api/reservations/expired    com.radovan.play.controllers.ReservationController.getAllExpiredReservations
+GET    /api/reservations/active    com.radovan.play.controllers.ReservationController.getAllActiveReservations
+DELETE  /api/reservations/cancel/:id   com.radovan.play.controllers.ReservationController.cancelReservation(id:Integer,request:Request)
+DELETE  /api/reservations/:id   com.radovan.play.controllers.ReservationController.deleteReservation(id:Integer)
+GET  /api/reservations/:id   com.radovan.play.controllers.ReservationController.getReservationDetails(id:Integer)
+GET  /api/reservations/findAlternatives/:id   com.radovan.play.controllers.ReservationController.findAlternativeRooms(id:Integer,request:Request)
+PUT  /api/reservations/:id   com.radovan.play.controllers.ReservationController.updateReservation(id:Integer,request:Request)
+
+#Notes
+GET   /api/notes    com.radovan.play.controllers.NoteController.getAllNotes
+GET   /api/notes/today    com.radovan.play.controllers.NoteController.getTodaysNotes
+DELETE  /api/notes/removeAll   com.radovan.play.controllers.NoteController.removeAllNotes
+GET   /api/notes/:id    com.radovan.play.controllers.NoteController.getNoteDetails(id:Integer)
+DELETE   /api/notes/:id    com.radovan.play.controllers.NoteController.deleteNote(id:Integer)
+
+
+#Health
+GET     /api/health     com.radovan.play.controllers.HealthController.healthCheck(request:Request)

@@ -1,0 +1,235 @@
+version: "3.8"
+
+networks:
+  hotel-network:
+    driver: bridge
+  monitoring:
+    driver: bridge
+
+volumes:
+  mariadb_data:
+  grafana-storage:
+
+services:
+  consul:
+    image: hashicorp/consul:1.20.5
+    ports:
+      - "8500:8500"
+    command: agent -server -ui -node=server-1 -bootstrap-expect=1 -client=0.0.0.0
+    networks:
+      - hotel-network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8500/v1/status/leader || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    restart: always
+
+  mariadb:
+    image: mariadb:11
+    container_name: hotel_mariadb
+    ports:
+      - "3307:3306"
+    environment:
+      - MYSQL_ROOT_PASSWORD=1111
+      - MYSQL_DATABASE=hotel-db
+      - MYSQL_USER=admin
+      - MYSQL_PASSWORD=admin
+    volumes:
+      - mariadb_data:/var/lib/mysql
+    networks:
+      - hotel-network
+    healthcheck:
+      test: ["CMD-SHELL", "mariadb -uadmin -padmin hotel-db -Bse 'SELECT 1;' || exit 1"]
+      start_period: 45s
+      interval: 15s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  adminer:
+    image: adminer
+    ports:
+      - "8082:8080"
+    networks:
+      - hotel-network
+    depends_on:
+      - mariadb
+    restart: unless-stopped
+
+  nats:
+    image: nats:latest
+    ports:
+      - "4222:4222"
+    networks:
+      - hotel-network
+    restart: unless-stopped
+
+  api-gateway:
+    build:
+      context: ./backend/api-gateway
+      dockerfile: Dockerfile
+    ports:
+      - "8090:8080"
+    environment:
+      - SPRING_CLOUD_CONSUL_HOST=consul
+      - SPRING_CLOUD_CONSUL_PORT=8500
+      - SPRING_APPLICATION_NAME=api-gateway
+    networks:
+      - hotel-network
+    depends_on:
+      consul:
+        condition: service_healthy
+    restart: unless-stopped
+
+  auth-service:
+    build:
+      context: ./backend/auth-service
+      dockerfile: Dockerfile
+    ports:
+      - "8081:8080"
+    environment:
+      - DB_URL=jdbc:mariadb://mariadb:3306/hotel-db
+      - DB_USERNAME=admin
+      - DB_PASSWORD=admin
+      - SPRING_CLOUD_CONSUL_HOST=consul
+      - SPRING_CLOUD_CONSUL_PORT=8500
+      - SPRING_APPLICATION_NAME=auth-service
+    networks:
+      - hotel-network
+    depends_on:
+      mariadb:
+        condition: service_healthy
+      consul:
+        condition: service_healthy
+    restart: unless-stopped
+
+  guest-service:
+    build:
+      context: ./backend/guest-service
+      dockerfile: Dockerfile
+    ports:
+      - "9001:9000"
+    environment:
+      - DB_URL=jdbc:mariadb://mariadb:3306/hotel-db
+      - DB_USERNAME=admin
+      - DB_PASSWORD=admin
+      - NATS_URL=nats://nats:4222
+      - CONSUL_HOST=consul
+      - CONSUL_PORT=8500
+      - SERVICE_NAME=guest-service
+      - PLAY_SECRET=xfjs0/9PtXC6I93xX63@_bQSfmtyRX>e<UE]6hmy2;wnHBc^Y2ttikzkj9=9sh9m
+      - PLAY_SERVER_HTTP_PORT=9000
+    networks:
+      - hotel-network
+    depends_on:
+      mariadb:
+        condition: service_healthy
+      nats:
+        condition: service_started
+      consul:
+        condition: service_healthy
+    restart: unless-stopped
+
+  room-service:
+    build:
+      context: ./backend/room-service
+      dockerfile: Dockerfile
+    ports:
+      - "9002:9000"
+    environment:
+      - DB_URL=jdbc:mariadb://mariadb:3306/hotel-db
+      - DB_USERNAME=admin
+      - DB_PASSWORD=admin
+      - NATS_URL=nats://nats:4222
+      - CONSUL_HOST=consul
+      - CONSUL_PORT=8500
+      - SERVICE_NAME=room-service
+      - PLAY_SECRET=?g=NByfFB5rojW0tAX`dy6DQvI0KYf2vY]5Qz7qNO23iszOA^NsyRLoJufXd?Z3z
+      - PLAY_SERVER_HTTP_PORT=9000
+    networks:
+      - hotel-network
+    depends_on:
+      mariadb:
+        condition: service_healthy
+      nats:
+        condition: service_started
+      consul:
+        condition: service_healthy
+    restart: unless-stopped
+
+  reservation-service:
+    build:
+      context: ./backend/reservation-service
+      dockerfile: Dockerfile
+    ports:
+      - "9003:9000"
+    environment:
+      - DB_URL=jdbc:mariadb://mariadb:3306/hotel-db
+      - DB_USERNAME=admin
+      - DB_PASSWORD=admin
+      - NATS_URL=nats://nats:4222
+      - CONSUL_HOST=consul
+      - CONSUL_PORT=8500
+      - SERVICE_NAME=reservation-service
+      - PLAY_SECRET=yv2M>gtPXpcMnGtC?@QwTX]W4ShEsG9HX_9ixR6FZ8AlI6g<2etg8YBSyz]YH96T
+      - PLAY_SERVER_HTTP_PORT=9000
+    networks:
+      - hotel-network
+    depends_on:
+      mariadb:
+        condition: service_healthy
+      nats:
+        condition: service_started
+      consul:
+        condition: service_healthy
+    restart: unless-stopped
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    restart: unless-stopped
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+    ports:
+      - "9090:9090"
+    networks:
+      - hotel-network
+      - monitoring
+    depends_on:
+      - api-gateway
+      - auth-service
+      - guest-service
+      - room-service
+      - reservation-service
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    restart: unless-stopped
+    volumes:
+      - grafana-storage:/var/lib/grafana
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    ports:
+      - "3002:3000"
+    networks:
+      - hotel-network
+      - monitoring
+    depends_on:
+      - prometheus
+
+  vue-frontend:
+    build:
+      context: ./vue-frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:80"
+    networks:
+      - hotel-network
+    depends_on:
+      - api-gateway
+    restart: unless-stopped

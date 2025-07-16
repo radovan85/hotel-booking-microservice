@@ -1,13 +1,6 @@
 <template>
   <section class="mt-5 mb-5">
-    <div
-      class="container py-5"
-      style="
-        font-family: 'Rajdhani', sans-serif;
-        color: #12044f;
-        font-weight: 600;
-      "
-    >
+    <div v-if="isReady" class="container py-5" style="font-family: 'Rajdhani', sans-serif; color: #12044f; font-weight: 600;">
       <div class="text-center mb-5">
         <h2 class="fw-bold">📋 Today's Notes Overview</h2>
         <p class="text-muted">
@@ -47,13 +40,15 @@
       </div>
 
       <div class="pagination" v-if="noteList.length > 0">
-        <button @click="prevPage" :disabled="currentPage === 1">
-          Previous
-        </button>
+        <button @click="prevPage" :disabled="currentPage === 1">Previous</button>
         <span>Page {{ currentPage }} of {{ totalPages }}</span>
-        <button @click="nextPage" :disabled="currentPage === totalPages">
-          Next
-        </button>
+        <button @click="nextPage" :disabled="currentPage === totalPages">Next</button>
+      </div>
+    </div>
+
+    <div v-else class="text-center mt-5">
+      <div class="spinner-border text-primary mt-5" role="status">
+        <span class="visually-hidden">Loading...</span>
       </div>
     </div>
   </section>
@@ -64,8 +59,11 @@ import NoteService from "@/services/NoteService";
 import { defineComponent } from "vue";
 
 export default defineComponent({
+  name: "NoteTodayView",
+
   data() {
     return {
+      isReady: false,
       noteService: new NoteService(),
       noteList: [] as any[],
       paginatedNotes: [] as any[],
@@ -76,17 +74,16 @@ export default defineComponent({
   },
 
   methods: {
-    listAllNotes(): Promise<any> {
-      return new Promise(() => {
-        this.noteService.getTodaysNotes().then((response) => {
+    listAllNotes(): Promise<void> {
+      return this.noteService.getTodaysNotes()
+        .then((response) => {
           this.noteList = response.data;
           this.totalPages = Math.ceil(this.noteList.length / this.pageSize);
           this.setPage(1);
         });
-      });
     },
 
-    setPage(page: number) {
+    setPage(page: number): void {
       if (page < 1 || page > this.totalPages) return;
       this.currentPage = page;
       this.paginatedNotes = this.noteList.slice(
@@ -95,19 +92,23 @@ export default defineComponent({
       );
     },
 
-    nextPage() {
+    nextPage(): void {
       this.setPage(this.currentPage + 1);
     },
 
-    prevPage() {
+    prevPage(): void {
       this.setPage(this.currentPage - 1);
     },
   },
 
   created() {
-    Promise.all([this.listAllNotes()]).catch((error) => {
-      console.log(`Error loading functions  ${error}`);
-    });
+    Promise.all([this.listAllNotes()])
+      .then(() => {
+        this.isReady = true;
+      })
+      .catch((error) => {
+        console.error("Error loading today's notes:", error);
+      });
   },
 });
 </script>

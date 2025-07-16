@@ -1,14 +1,5 @@
 <template>
-  <div
-    class="container"
-    style="
-      font-family: Rajdhani, sans-serif;
-      color: #12044f;
-      font-weight: 700;
-      margin-bottom: 100px;
-      margin-top: 120px;
-    "
-  >
+  <div v-if="isReady" class="container" style="font-family: Rajdhani, sans-serif; color: #12044f; font-weight: 700; margin-bottom: 100px; margin-top: 120px;">
     <div class="text-center">
       <h2>Account Information</h2>
     </div>
@@ -43,9 +34,13 @@
     </table>
 
     <div class="d-flex justify-content-center mt-5">
-      <router-link class="btn btn-secondary border-dark" to="/home"
-        >Home Page</router-link
-      >
+      <router-link class="btn btn-secondary border-dark" to="/home">Home Page</router-link>
+    </div>
+  </div>
+
+  <div v-else class="text-center mt-5">
+    <div class="spinner-border text-primary mt-5" role="status">
+      <span class="visually-hidden">Loading...</span>
     </div>
   </div>
 </template>
@@ -58,8 +53,11 @@ import UserService from "@/services/UserService";
 import { defineComponent } from "vue";
 
 export default defineComponent({
+  name: "AccountView",
+
   data() {
     return {
+      isReady: false,
       guest: new Guest(),
       user: new User(),
       guestService: new GuestService(),
@@ -68,26 +66,31 @@ export default defineComponent({
   },
 
   methods: {
-    retrieveUser(): Promise<any> {
-      return new Promise(() => {
-        this.userService.getAuthUser().then((response) => {
+    retrieveUser(): Promise<void> {
+      return this.userService.getAuthUser()
+        .then((response) => {
           this.user = response.data;
         });
-      });
     },
 
-    retrieveGuest(): Promise<any> {
-      return new Promise(() => {
-        this.guestService.getCurrentGuest().then((response) => {
+    retrieveGuest(): Promise<void> {
+      return this.guestService.getCurrentGuest()
+        .then((response) => {
           this.guest = response.data;
         });
-      });
     },
   },
 
   created() {
-    Promise.all([this.retrieveGuest(), this.retrieveUser()]).catch((error) => {
-      console.log(`Error loading functions  ${error}`);
+    Promise.all([
+      this.retrieveGuest(),
+      this.retrieveUser()
+    ])
+    .then(() => {
+      this.isReady = true;
+    })
+    .catch((error) => {
+      console.error("Failed to load account data:", error);
     });
   },
 });

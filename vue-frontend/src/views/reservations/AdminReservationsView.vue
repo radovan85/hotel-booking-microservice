@@ -1,27 +1,13 @@
 <template>
-  <div
-    class="container py-5 mt-5 mb-5"
-    style="
-      font-family: 'Rajdhani', sans-serif;
-      color: #12044f;
-      font-weight: 700;
-    "
-  >
+  <div v-if="isReady" class="container py-5 mt-5 mb-5" style="font-family: 'Rajdhani', sans-serif; color: #12044f; font-weight: 700;">
     <div class="text-center mb-5">
       <h2>📋 Reservations List</h2>
     </div>
 
-    <!-- Filter Buttons -->
     <div class="d-flex justify-content-center gap-3 mb-4">
-      <button class="btn btn-info px-4" @click="listAllReservations">
-        All
-      </button>
-      <button class="btn btn-primary px-4" @click="listAllActiveReservations">
-        Active
-      </button>
-      <button class="btn btn-danger px-4" @click="listExpiredReservations">
-        Expired
-      </button>
+      <button class="btn btn-info px-4" @click="listAllReservations">All</button>
+      <button class="btn btn-primary px-4" @click="listAllActiveReservations">Active</button>
+      <button class="btn btn-danger px-4" @click="listExpiredReservations">Expired</button>
     </div>
 
     <!-- 🟦 All Reservations -->
@@ -228,11 +214,14 @@
       </div>
     </section>
 
-    <!-- 🔙 Return Home -->
     <div class="text-center mt-5">
-      <router-link class="btn btn-secondary px-4" to="/home"
-        >🏠 Home Page</router-link
-      >
+      <router-link class="btn btn-secondary px-4" to="/home">🏠 Home Page</router-link>
+    </div>
+  </div>
+
+  <div v-else class="text-center mt-5">
+    <div class="spinner-border text-primary mt-5" role="status">
+      <span class="visually-hidden">Loading...</span>
     </div>
   </div>
 </template>
@@ -246,8 +235,11 @@ import { defineComponent } from "vue";
 import { useRouter } from "vue-router";
 
 export default defineComponent({
+  name: "ReservationListView",
+
   data() {
     return {
+      isReady: false,
       router: useRouter(),
       listAll: false,
       listActive: false,
@@ -272,37 +264,21 @@ export default defineComponent({
   methods: {
     setPageByType(type: "all" | "active" | "expired", page: number) {
       if (page < 1) return;
-
       this.currentPage = page;
 
       if (type === "all") {
-        this.totalPages = Math.ceil(
-          this.reservationListAll.length / this.pageSize
-        );
-        this.paginatedReservationsAll = this.reservationListAll.slice(
-          (page - 1) * this.pageSize,
-          page * this.pageSize
-        );
+        this.totalPages = Math.ceil(this.reservationListAll.length / this.pageSize);
+        this.paginatedReservationsAll = this.reservationListAll.slice((page - 1) * this.pageSize, page * this.pageSize);
       }
 
       if (type === "active") {
-        this.totalPages = Math.ceil(
-          this.reservationListActive.length / this.pageSize
-        );
-        this.paginatedReservationsActive = this.reservationListActive.slice(
-          (page - 1) * this.pageSize,
-          page * this.pageSize
-        );
+        this.totalPages = Math.ceil(this.reservationListActive.length / this.pageSize);
+        this.paginatedReservationsActive = this.reservationListActive.slice((page - 1) * this.pageSize, page * this.pageSize);
       }
 
       if (type === "expired") {
-        this.totalPages = Math.ceil(
-          this.reservationListExpired.length / this.pageSize
-        );
-        this.paginatedReservationsExpired = this.reservationListExpired.slice(
-          (page - 1) * this.pageSize,
-          page * this.pageSize
-        );
+        this.totalPages = Math.ceil(this.reservationListExpired.length / this.pageSize);
+        this.paginatedReservationsExpired = this.reservationListExpired.slice((page - 1) * this.pageSize, page * this.pageSize);
       }
     },
 
@@ -314,59 +290,45 @@ export default defineComponent({
       this.setPageByType(type, this.currentPage - 1);
     },
 
-    listAllReservations(): Promise<any> {
-      return new Promise(() => {
-        this.reservationService.collectAllReservations().then((response) => {
-          this.reservationListAll = response.data;
-          this.listAll = true;
-          this.listActive = false;
-          this.listExpired = false;
-          this.setPageByType("all", 1);
-        });
+    listAllReservations(): Promise<void> {
+      return this.reservationService.collectAllReservations().then((response) => {
+        this.reservationListAll = response.data;
+        this.listAll = true;
+        this.listActive = false;
+        this.listExpired = false;
+        this.setPageByType("all", 1);
       });
     },
 
-    listExpiredReservations(): Promise<any> {
-      return new Promise(() => {
-        this.reservationService
-          .collectAllExpiredReservations()
-          .then((response) => {
-            this.reservationListExpired = response.data;
-            this.listAll = false;
-            this.listActive = false;
-            this.listExpired = true;
-            this.setPageByType("expired", 1);
-          });
+    listExpiredReservations(): Promise<void> {
+      return this.reservationService.collectAllExpiredReservations().then((response) => {
+        this.reservationListExpired = response.data;
+        this.listAll = false;
+        this.listActive = false;
+        this.listExpired = true;
+        this.setPageByType("expired", 1);
       });
     },
 
-    listAllActiveReservations(): Promise<any> {
-      return new Promise(() => {
-        this.reservationService
-          .collectAllActiveReservations()
-          .then((response) => {
-            this.reservationListActive = response.data;
-            this.listAll = false;
-            this.listActive = true;
-            this.listExpired = false;
-            this.setPageByType("active", 1);
-          });
+    listAllActiveReservations(): Promise<void> {
+      return this.reservationService.collectAllActiveReservations().then((response) => {
+        this.reservationListActive = response.data;
+        this.listAll = false;
+        this.listActive = true;
+        this.listExpired = false;
+        this.setPageByType("active", 1);
       });
     },
 
-    listAllGuests(): Promise<any> {
-      return new Promise(() => {
-        this.guestService.collectAllGuests().then((response) => {
-          this.guestList = response.data;
-        });
+    listAllGuests(): Promise<void> {
+      return this.guestService.collectAllGuests().then((response) => {
+        this.guestList = response.data;
       });
     },
 
-    listAllUsers(): Promise<any> {
-      return new Promise(() => {
-        this.userService.collectAllUsers().then((response) => {
-          this.userList = response.data;
-        });
+    listAllUsers(): Promise<void> {
+      return this.userService.collectAllUsers().then((response) => {
+        this.userList = response.data;
       });
     },
 
@@ -380,16 +342,14 @@ export default defineComponent({
       return user;
     },
 
-    deleteReservation(reservationId: any) {
-      if (confirm(`Remove this reservation?`)) {
-        this.reservationService
-          .deleteReservation(reservationId)
+    deleteReservation(reservationId: any): void {
+      if (confirm("Remove this reservation?")) {
+        this.reservationService.deleteReservation(reservationId)
           .then(() => {
             if (this.listActive) this.listAllActiveReservations();
             if (this.listExpired) this.listExpiredReservations();
             if (this.listAll) this.listAllReservations();
           })
-
           .catch((error) => {
             console.error(`Deletion failed: ${error}`);
             alert("Could not delete reservation. Try again later.");
@@ -399,8 +359,15 @@ export default defineComponent({
   },
 
   created() {
-    Promise.all([this.listAllGuests(), this.listAllUsers()]).catch((error) => {
-      console.log(`Error loading functions: ${error}`);
+    Promise.all([
+      this.listAllGuests(),
+      this.listAllUsers()
+    ])
+    .then(() => {
+      this.isReady = true;
+    })
+    .catch((error) => {
+      console.error("Error loading reservation view:", error);
     });
   },
 });

@@ -1,14 +1,5 @@
 <template>
-  <div
-    class="container"
-    style="
-      font-family: Rajdhani, sans-serif;
-      color: #12044f;
-      font-weight: 700;
-      margin-bottom: 100px;
-      margin-top: 120px;
-    "
-  >
+  <div v-if="isReady" class="container" style="font-family: Rajdhani, sans-serif; color: #12044f; font-weight: 700; margin-bottom: 100px; margin-top: 120px;">
     <div class="text-center text-uppercase pb-3">
       <h3>Category Update Form</h3>
       <hr class="mx-auto" style="width: 50px; border-top: 3px solid #12044f" />
@@ -19,118 +10,69 @@
         <div class="card shadow-sm p-4">
           <form id="roomCategoryForm">
             <div class="mb-3">
-              <label class="form-label" v-html="'Name'"></label>
-              <input
-                type="text"
-                class="form-control"
-                id="name"
-                name="name"
-                placeholder="Enter Category Name"
-                :value="currentCategory.name"
-              />
-              <span
-                class="text-danger"
-                id="nameError"
-                v-html="'Not empty! Max 30 letters allowed!'"
-                style="visibility: hidden"
-              >
-              </span>
+              <label class="form-label">Name</label>
+              <input type="text" class="form-control" id="name" name="name" placeholder="Enter Category Name" :value="currentCategory.name" />
+              <span class="text-danger" id="nameError" style="visibility: hidden">Not empty! Max 30 letters allowed!</span>
             </div>
 
             <div class="mb-3">
-              <label class="form-label" v-html="'Price'"></label>
-              <input
-                type="text"
-                class="form-control"
-                id="price"
-                name="price"
-                placeholder="Enter Price"
-                :value="currentCategory.price"
-                @keydown="validationService.validateNumber($event)"
-              />
-              <span
-                class="text-danger"
-                id="priceError"
-                v-html="'Please provide valid price!'"
-                style="visibility: hidden"
-              >
-              </span>
+              <label class="form-label">Price</label>
+              <input type="text" class="form-control" id="price" name="price" placeholder="Enter Price" :value="currentCategory.price" @keydown="validationService.validateNumber($event)" />
+              <span class="text-danger" id="priceError" style="visibility: hidden">Please provide valid price!</span>
             </div>
 
             <div class="mb-3">
-              <label class="form-label" v-html="'Wc'"></label>
+              <label class="form-label">Wc</label>
               <select class="form-select" id="wc" name="wc">
-                <option :value="''" v-html="'Please Select'"></option>
-                <option :value="'0'" v-html="'No'"></option>
-                <option :value="'1'" v-html="'Yes'"></option>
+                <option :value="''">Please Select</option>
+                <option :value="'0'">No</option>
+                <option :value="'1'">Yes</option>
               </select>
-              <span
-                class="text-danger"
-                id="wcError"
-                v-html="'Please select one of the options!'"
-                style="visibility: hidden"
-              >
-              </span>
+              <span class="text-danger" id="wcError" style="visibility: hidden">Please select one of the options!</span>
             </div>
 
             <div class="mb-3">
-              <label class="form-label" v-html="'Wi-fi'"></label>
+              <label class="form-label">Wi-fi</label>
               <select class="form-select" id="wifi" name="wifi">
-                <option :value="''" v-html="'Please Select'"></option>
-                <option :value="'0'" v-html="'No'"></option>
-                <option :value="'1'" v-html="'Yes'"></option>
+                <option :value="''">Please Select</option>
+                <option :value="'0'">No</option>
+                <option :value="'1'">Yes</option>
               </select>
-              <span
-                class="text-danger"
-                id="wifiError"
-                v-html="'Please select one of the options!'"
-                style="visibility: hidden"
-              >
-              </span>
+              <span class="text-danger" id="wifiError" style="visibility: hidden">Please select one of the options!</span>
             </div>
 
             <div class="mb-3">
-              <label class="form-label" v-html="'Tv'"></label>
+              <label class="form-label">Tv</label>
               <select class="form-select" id="tv" name="tv">
-                <option :value="''" v-html="'Please Select'"></option>
-                <option :value="'0'" v-html="'No'"></option>
-                <option :value="'1'" v-html="'Yes'"></option>
+                <option :value="''">Please Select</option>
+                <option :value="'0'">No</option>
+                <option :value="'1'">Yes</option>
               </select>
-              <span
-                class="text-danger"
-                id="tvError"
-                v-html="'Please select one of the options!'"
-                style="visibility: hidden"
-              >
-              </span>
+              <span class="text-danger" id="tvError" style="visibility: hidden">Please select one of the options!</span>
             </div>
 
             <div class="mb-3">
-              <label class="form-label" v-html="'Bar'"></label>
+              <label class="form-label">Bar</label>
               <select class="form-select" id="bar" name="bar">
-                <option :value="''" v-html="'Please Select'"></option>
-                <option :value="'0'" v-html="'No'"></option>
-                <option :value="'1'" v-html="'Yes'"></option>
+                <option :value="''">Please Select</option>
+                <option :value="'0'">No</option>
+                <option :value="'1'">Yes</option>
               </select>
-              <span
-                class="text-danger"
-                id="barError"
-                v-html="'Please select one of the options!'"
-                style="visibility: hidden"
-              >
-              </span>
+              <span class="text-danger" id="barError" style="visibility: hidden">Please select one of the options!</span>
             </div>
 
             <div class="text-center">
-              <button
-                type="submit"
-                class="btn btn-info px-4"
-                v-html="'Update'"
-              ></button>
+              <button type="submit" class="btn btn-info px-4">Update</button>
             </div>
           </form>
         </div>
       </div>
+    </div>
+  </div>
+
+  <div v-else class="text-center mt-5">
+    <div class="spinner-border text-primary mt-5" role="status">
+      <span class="visually-hidden">Loading...</span>
     </div>
   </div>
 </template>
@@ -144,19 +86,19 @@ import { defineComponent, nextTick } from "vue";
 import { useRoute } from "vue-router";
 
 export default defineComponent({
-  setup() {
-    var route = useRoute();
+  name: "CategoryUpdateView",
 
-    return {
-      route,
-    };
+  setup() {
+    const route = useRoute();
+    return { route };
   },
 
   data() {
     return {
+      isReady: false,
+      currentCategory: new RoomCategory(),
       categoryService: new RoomCategoryService(),
       validationService: new ValidationService(),
-      currentCategory: new RoomCategory(),
     };
   },
 
@@ -166,7 +108,6 @@ export default defineComponent({
         .getCategoryDetails(categoryId)
         .then((response) => {
           const data = response?.data;
-
           if (!data) {
             console.warn("No category data received.");
             return;
@@ -177,9 +118,7 @@ export default defineComponent({
           return nextTick(() => {
             const fields = ["wc", "wifi", "tv", "bar"] as const;
             for (const field of fields) {
-              const el = document.getElementById(
-                field
-              ) as HTMLSelectElement | null;
+              const el = document.getElementById(field) as HTMLSelectElement | null;
               const val = this.currentCategory[field];
               if (el && val !== undefined && val !== null) {
                 el.value = val.toString();
@@ -191,43 +130,50 @@ export default defineComponent({
           console.error("Failed to load category:", err);
         });
     },
+
+    setupSubmitListener() {
+      const form = document.getElementById("roomCategoryForm") as HTMLFormElement;
+      form.addEventListener("submit", async (event) => {
+        event.preventDefault();
+
+        const formData = new FormData(form);
+        const serializedData: { [key: string]: string } = {};
+        formData.forEach((value, key) => {
+          serializedData[key] = value.toString().trim();
+        });
+
+        if (this.validationService.validateRoomCategory()) {
+          await axios
+            .put(`${this.categoryService.getTargetUrl()}/${this.currentCategory.roomCategoryId}`, {
+              name: serializedData.name,
+              price: Number(serializedData.price),
+              wc: Number(serializedData.wc),
+              wifi: Number(serializedData.wifi),
+              tv: Number(serializedData.tv),
+              bar: Number(serializedData.bar),
+            })
+            .then(() => {
+              this.categoryService.redirectAllCategories();
+            })
+            .catch((error) => {
+              console.error("Update failed:", error);
+            });
+        }
+      });
+    },
   },
 
   created() {
-    this.getCategoryDetails(this.route.params.categoryId);
-  },
-
-  mounted() {
-    var form = document.getElementById(`roomCategoryForm`) as HTMLFormElement;
-
-    form.addEventListener(`submit`, async (event) => {
-      event.preventDefault();
-
-      var formData = new FormData(form);
-      var serializedData: { [key: string]: string } = {};
-      formData.forEach((value, key) => {
-        serializedData[key] = value.toString().trim();
+    Promise.all([
+      this.getCategoryDetails(this.route.params.categoryId)
+    ])
+      .then(() => {
+        this.isReady = true;
+        this.setupSubmitListener();
+      })
+      .catch((err) => {
+        console.error("Error loading form:", err);
       });
-
-      if (this.validationService.validateRoomCategory()) {
-        await axios
-          .put(`${this.categoryService.getTargetUrl()}/${this.currentCategory.roomCategoryId}`, {
-            name: serializedData[`name`],
-            price: Number(serializedData[`price`]),
-            wc: Number(serializedData[`wc`]),
-            wifi: Number(serializedData[`wifi`]),
-            tv: Number(serializedData[`tv`]),
-            bar: Number(serializedData[`bar`]),
-          })
-          .then(() => {
-            this.categoryService.redirectAllCategories();
-          })
-
-          .catch((error) => {
-            console.log(error);
-          });
-      }
-    });
   },
 });
 </script>

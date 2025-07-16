@@ -1,8 +1,5 @@
 <template>
-  <div
-    class="container"
-    style="margin-top: 100px; font-family: Rajdhani, sans-serif"
-  >
+  <div v-if="isReady" class="container" style="margin-top: 100px; font-family: Rajdhani, sans-serif">
     <h2 class="text-center text-uppercase mb-4 fw-bold">Guests List</h2>
 
     <div class="table-responsive shadow-sm">
@@ -17,41 +14,18 @@
           </tr>
         </thead>
         <tbody>
-          <template
-            v-for="tempGuest in paginatedGuests"
-            :key="tempGuest.guestId"
-          >
+          <template v-for="tempGuest in paginatedGuests" :key="tempGuest.guestId">
             <tr>
               <td v-html="tempGuest.guestId"></td>
-              <td
-                v-html="
-                  getUserById(tempGuest.userId).firstName +
-                  ' ' +
-                  getUserById(tempGuest.userId).lastName
-                "
-              ></td>
+              <td v-html="getUserById(tempGuest.userId).firstName + ' ' + getUserById(tempGuest.userId).lastName"></td>
               <td v-html="getUserById(tempGuest.userId).email"></td>
               <td>
-                <span
-                  :class="
-                    getUserById(tempGuest.userId).enabled === 1
-                      ? 'badge bg-success'
-                      : 'badge bg-danger'
-                  "
-                >
-                  {{
-                    getUserById(tempGuest.userId).enabled === 1 ? "Yes" : "No"
-                  }}
+                <span :class="getUserById(tempGuest.userId).enabled === 1 ? 'badge bg-success' : 'badge bg-danger'">
+                  {{ getUserById(tempGuest.userId).enabled === 1 ? 'Yes' : 'No' }}
                 </span>
               </td>
-
               <td>
-                <button
-                  class="btn btn-sm btn-primary me-1"
-                  @click="
-                    $router.push(`/guests/guestDetails/${tempGuest.guestId}`)
-                  "
-                >
+                <button class="btn btn-sm btn-primary me-1" @click="$router.push(`/guests/guestDetails/${tempGuest.guestId}`)">
                   Details
                 </button>
               </td>
@@ -61,14 +35,16 @@
       </table>
 
       <div class="pagination" v-if="guestList.length > 0">
-        <button @click="prevPage" :disabled="currentPage === 1">
-          Previous
-        </button>
+        <button @click="prevPage" :disabled="currentPage === 1">Previous</button>
         <span>Page {{ currentPage }} of {{ totalPages }}</span>
-        <button @click="nextPage" :disabled="currentPage === totalPages">
-          Next
-        </button>
+        <button @click="nextPage" :disabled="currentPage === totalPages">Next</button>
       </div>
+    </div>
+  </div>
+
+  <div v-else class="text-center mt-5">
+    <div class="spinner-border text-primary mt-5" role="status">
+      <span class="visually-hidden">Loading...</span>
     </div>
   </div>
 </template>
@@ -81,14 +57,16 @@ import { defineComponent } from "vue";
 import { useRouter } from "vue-router";
 
 export default defineComponent({
-  
+  name: "GuestListView",
+
   data() {
     return {
+      isReady: false,
       guestService: new GuestService(),
       userService: new UserService(),
       guestList: [] as any[],
       paginatedGuests: [] as any[],
-      userList: [] as any[],
+      userList: [] as User[],
       pageSize: 6,
       currentPage: 1,
       totalPages: 1,
@@ -97,34 +75,24 @@ export default defineComponent({
   },
 
   methods: {
-    listAllGuests() {
-      return new Promise(() => {
-        this.guestService
-          .collectAllGuests()
-          .then((response: { data: any[] }) => {
-            this.guestList = response.data;
-            this.totalPages = Math.ceil(this.guestList.length / this.pageSize);
-            this.setPage(1);
-          });
-      });
+    listAllGuests(): Promise<void> {
+      return this.guestService.collectAllGuests()
+        .then((response) => {
+          this.guestList = response.data;
+          this.totalPages = Math.ceil(this.guestList.length / this.pageSize);
+          this.setPage(1);
+        });
     },
 
-    listAllUsers(): Promise<any> {
-      return new Promise(() => {
-        this.userService.collectAllUsers().then((response) => {
+    listAllUsers(): Promise<void> {
+      return this.userService.collectAllUsers()
+        .then((response) => {
           this.userList = response.data;
         });
-      });
     },
 
     getUserById(userId: any): User {
-      var returnValue: User = new User();
-      this.userList.forEach((tempUser) => {
-        if (tempUser.id === userId) {
-          returnValue = tempUser;
-        }
-      });
-      return returnValue;
+      return this.userList.find((user) => user.id === userId) || new User();
     },
 
     setPage(page: number) {
@@ -142,15 +110,21 @@ export default defineComponent({
 
     prevPage() {
       this.setPage(this.currentPage - 1);
-    },
+    }
   },
 
   created() {
-    Promise.all([this.listAllGuests(), this.listAllUsers()])
+    Promise.all([
+      this.listAllGuests(),
+      this.listAllUsers()
+    ])
+    .then(() => {
+      this.isReady = true;
+    })
     .catch((error) => {
-      console.log(`Error loading functions  ${error}`);
+      console.error("Error loading guest list:", error);
     });
-  },
+  }
 });
 </script>
 

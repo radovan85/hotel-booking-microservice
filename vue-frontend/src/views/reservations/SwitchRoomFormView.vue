@@ -70,7 +70,7 @@
 
     <!-- Loading View -->
     <div v-else class="text-center mt-5">
-      <p class="text-muted">🔄 Loading reservation info and available rooms...</p>
+      <p class="text-muted mt-5">🔄 Loading reservation info and available rooms...</p>
     </div>
   </div>
 </template>

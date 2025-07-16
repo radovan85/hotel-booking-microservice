@@ -1,13 +1,6 @@
 <template>
   <section class="mt-5 mb-5">
-    <div
-      class="container py-5"
-      style="
-        font-family: 'Rajdhani', sans-serif;
-        color: #12044f;
-        font-weight: 600;
-      "
-    >
+    <div v-if="isReady" class="container py-5" style="font-family: 'Rajdhani', sans-serif; color: #12044f; font-weight: 600;">
       <div class="text-center mb-5">
         <h2 class="fw-bold">📋 Notes Overview</h2>
         <p class="text-muted">System-generated notes and audit messages</p>
@@ -15,9 +8,7 @@
 
       <!-- Filter buttons -->
       <div class="d-flex justify-content-center flex-wrap mb-4 gap-3">
-        <router-link class="btn btn-outline-primary px-4" to="/notes/today"
-          >Today</router-link
-        >
+        <router-link class="btn btn-outline-primary px-4" to="/notes/today">Today</router-link>
         <button class="btn btn-outline-danger px-4" @click="clearAll">Clear All</button>
       </div>
 
@@ -39,14 +30,7 @@
                 <td v-html="tempNote.subject"></td>
                 <td v-html="tempNote.createTimeStr"></td>
                 <td>
-                  <button
-                    class="btn btn-sm btn-primary"
-                    @click="
-                      $router.push(`notes/noteDetails/${tempNote.noteId}`)
-                    "
-                  >
-                    Details
-                  </button>
+                  <button class="btn btn-sm btn-primary" @click="$router.push(`notes/noteDetails/${tempNote.noteId}`)">Details</button>
                 </td>
               </tr>
             </template>
@@ -55,13 +39,15 @@
       </div>
 
       <div class="pagination" v-if="noteList.length > 0">
-        <button @click="prevPage" :disabled="currentPage === 1">
-          Previous
-        </button>
+        <button @click="prevPage" :disabled="currentPage === 1">Previous</button>
         <span>Page {{ currentPage }} of {{ totalPages }}</span>
-        <button @click="nextPage" :disabled="currentPage === totalPages">
-          Next
-        </button>
+        <button @click="nextPage" :disabled="currentPage === totalPages">Next</button>
+      </div>
+    </div>
+
+    <div v-else class="text-center mt-5">
+      <div class="spinner-border text-primary mt-5" role="status">
+        <span class="visually-hidden">Loading...</span>
       </div>
     </div>
   </section>
@@ -73,8 +59,11 @@ import { defineComponent } from "vue";
 import { useRouter } from "vue-router";
 
 export default defineComponent({
+  name: "NoteOverviewView",
+
   data() {
     return {
+      isReady: false,
       noteService: new NoteService(),
       noteList: [] as any[],
       paginatedNotes: [] as any[],
@@ -86,17 +75,16 @@ export default defineComponent({
   },
 
   methods: {
-    listAllNotes(): Promise<any> {
-      return new Promise(() => {
-        this.noteService.getAllNotes().then((response) => {
+    listAllNotes(): Promise<void> {
+      return this.noteService.getAllNotes()
+        .then((response) => {
           this.noteList = response.data;
           this.totalPages = Math.ceil(this.noteList.length / this.pageSize);
           this.setPage(1);
         });
-      });
     },
 
-    setPage(page: number) {
+    setPage(page: number): void {
       if (page < 1 || page > this.totalPages) return;
       this.currentPage = page;
       this.paginatedNotes = this.noteList.slice(
@@ -105,40 +93,40 @@ export default defineComponent({
       );
     },
 
-    nextPage() {
+    nextPage(): void {
       this.setPage(this.currentPage + 1);
     },
 
-    prevPage() {
+    prevPage(): void {
       this.setPage(this.currentPage - 1);
     },
 
     async clearAll(): Promise<void> {
-      if (
-        !confirm(
-          "Are you sure you want to delete all notes? This action cannot be undone."
-        )
-      ) {
-        return; // korisnik odustao
+      if (!confirm("Are you sure you want to delete all notes? This action cannot be undone.")) {
+        return;
       }
 
       try {
         await this.noteService.deleteAll();
-        this.noteList = []; // očisti listu direktno
+        this.noteList = [];
         this.paginatedNotes = [];
         this.totalPages = 1;
         this.currentPage = 1;
       } catch (error) {
         alert("Failed to clear notes!");
-        console.log(error);
+        console.error("Clear all error:", error);
       }
-    },
+    }
   },
 
   created() {
-    Promise.all([this.listAllNotes()]).catch((error) => {
-      console.log(`Error loading functions  ${error}`);
-    });
+    Promise.all([this.listAllNotes()])
+      .then(() => {
+        this.isReady = true;
+      })
+      .catch((error) => {
+        console.error("Error loading notes:", error);
+      });
   },
 });
 </script>

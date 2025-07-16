@@ -32,6 +32,12 @@ public class ApiGatewayController {
 		if (pathSegments.length < 3) {
 			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid API request format");
 		}
+		
+		if ("guests".equalsIgnoreCase(pathSegments[2]) 
+		        && pathSegments.length > 3 
+		        && "register".equalsIgnoreCase(pathSegments[3])) {
+		        return apiGatewayService.forwardRequest("guest-service", request);
+		    }
 
 		String firstSegment = pathSegments[2];
 
@@ -45,14 +51,9 @@ public class ApiGatewayController {
 	}
 
 	private String mapSegmentToService(String segment) {
-		Map<String, String> serviceMappings = Map.of(
-				"rooms", "room-service",
-				"categories", "room-service",
-				"auth","auth-service", 
-				"guests", "guest-service",
-				"reservations", "reservation-service",
-				"notes", "reservation-service"
-				);
+		Map<String, String> serviceMappings = Map.of("rooms", "room-service", "categories", "room-service", "auth",
+				"auth-service", "guests", "guest-service", "reservations", "reservation-service", "notes",
+				"reservation-service");
 
 		return serviceMappings.get(segment);
 	}

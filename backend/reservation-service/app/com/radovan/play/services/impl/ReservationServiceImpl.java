@@ -195,8 +195,25 @@ public class ReservationServiceImpl implements ReservationService {
 
     @Override
     public void deleteReservation(Integer reservationId) {
-        getReservationById(reservationId);
+        ReservationDto reservation = getReservationById(reservationId);
+        JsonNode guestNode = natsSender.getGuestById(reservation.getGuestId());
+        Integer userId = guestNode.get("userId").asInt();
+        JsonNode userNode = natsSender.getUserById(userId);
+        JsonNode roomNode = natsSender.getRoomById(reservation.getRoomId());
+        Integer roomNumber = roomNode.get("roomNumber").asInt();
+        String firstName = getSafeText(userNode, "firstName");
+        String lastName = getSafeText(userNode, "lastName");
         reservationRepository.deleteById(reservationId);
+        NoteDto noteDto = new NoteDto();
+        noteDto.setSubject("Reservation removed");
+        String text = "The reservation for Mr./Ms. " + firstName + " " + lastName +
+                ", scheduled for Room No. " + roomNumber +
+                " on " + reservation.getCheckInDateStr() +
+                ", has been removed by the Administrator, as it was either cancelled or no longer valid.";
+        noteDto.setText(text);
+        NoteEntity noteEntity = tempConverter.noteDtoToEntity(noteDto);
+        noteEntity.setCreateTime(conversionUtils.getCurrentUTCTimestamp());
+        noteRepository.save(noteEntity);
     }
 
     @Override

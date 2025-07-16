@@ -1,9 +1,6 @@
 <template>
   <section class="mt-5">
-    <div
-      class="container py-5"
-      style="font-family: 'Rajdhani', sans-serif; color: #12044f"
-    >
+    <div v-if="isReady" class="container py-5" style="font-family: 'Rajdhani', sans-serif; color: #12044f">
       <div class="text-center mb-4">
         <h2 class="fw-bold">📝 Note Details</h2>
         <p class="text-muted">Overview of a system-generated note</p>
@@ -37,6 +34,12 @@
         <button class="btn btn-danger px-4" @click="deleteNote(note.noteId)">Remove</button>
       </div>
     </div>
+
+    <div v-else class="text-center mt-5">
+      <div class="spinner-border text-primary mt-5" role="status">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+    </div>
   </section>
 </template>
 
@@ -47,49 +50,53 @@ import { defineComponent } from "vue";
 import { useRoute, useRouter } from "vue-router";
 
 export default defineComponent({
+  name: "NoteDetailsView",
+
   data() {
     return {
+      isReady: false,
+      note: new Note(),
+      noteService: new NoteService(),
       router: useRouter(),
       route: useRoute(),
-      noteService: new NoteService(),
-      note: new Note(),
     };
   },
 
   methods: {
-    getNoteDetails(noteId: any): Promise<any> {
-      return new Promise(() => {
-        this.noteService.getNoteDetails(noteId).then((response) => {
+    getNoteDetails(noteId: any): Promise<void> {
+      return this.noteService.getNoteDetails(noteId)
+        .then((response) => {
           this.note = response.data;
         });
-      });
     },
 
-    goBack() {
+    goBack(): void {
       this.router.back();
     },
 
-    deleteNote(noteId:any):Promise<any>{
-        return new Promise(() => {
-          if(confirm(`Remove this note?`)){
-            this.noteService.deleteNote(noteId)
-            .then(() => {
-                this.router.push(`/notes`);
-            })
-
-            .catch((error) => {
-                alert(`Failed!`);
-                console.log(`error:  ${error}`);
-            })
-          }
-        })
-    }
+    deleteNote(noteId: any): void {
+      if (confirm("Remove this note?")) {
+        this.noteService.deleteNote(noteId)
+          .then(() => {
+            this.router.push("/notes");
+          })
+          .catch((error) => {
+            alert("Failed!");
+            console.error("Error deleting note:", error);
+          });
+      }
+    },
   },
 
   created() {
-    Promise.all([this.getNoteDetails(this.route.params.id)])
+    Promise.all([
+      this.getNoteDetails(this.route.params.id)
+    ])
+    .then(() => {
+      this.isReady = true;
+    })
     .catch((error) => {
-      console.log(`Error loading functions  ${error}`);
+      console.error("Error loading note details:", error);
     });
   },
 });

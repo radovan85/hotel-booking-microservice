@@ -13,6 +13,10 @@ export default class ReservationService {
         router.push(`/reservations/booked`);
     }
 
+    redirectSwitchRoom(reservationId:any){
+        router.push(`/reservations/switchRoom/${reservationId}`);
+    }
+
     collectAllReservations():Promise<any>{
         return axios.get(`${this.targetUrl}`);
     }

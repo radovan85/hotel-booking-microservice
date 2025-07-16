@@ -94,14 +94,14 @@
     <!-- Action Buttons -->
     <div class="text-center mt-5">
       <button class="btn btn-secondary px-4 me-3" @click="goBack">Back</button>
-      <button class="btn btn-info px-4 me-3">Switch Room</button>
+      <button class="btn btn-info px-4 me-3" @click="reservationService.redirectSwitchRoom(reservation.reservationId)">Switch Room</button>
       <button class="btn btn-danger px-4" @click="deleteReservation(reservation.reservationId)">Remove</button>
     </div>
   </div>
 
   <!-- Loader dok čekamo podatke -->
   <div v-else class="text-center my-5 py-5">
-    <div class="spinner-border text-primary" role="status"></div>
+    <div class="spinner-border text-primary mt-5" role="status"></div>
     <p class="mt-3">Loading reservation details...</p>
   </div>
 </template>

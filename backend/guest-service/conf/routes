@@ -1,0 +1,10 @@
+# Routes
+GET   /api/guests    com.radovan.play.controllers.GuestController.listAllGuests
+GET   /api/guests/me  com.radovan.play.controllers.GuestController.getCurrentGuest(request:Request)
+POST   /api/guests/register   com.radovan.play.controllers.GuestController.createGuest(request:Request)
+GET   /api/guests/:id    com.radovan.play.controllers.GuestController.guestDetails(id:Integer)
+DELETE    /api/guests/:id   com.radovan.play.controllers.GuestController.deleteGuest(id:Integer,request:Request)
+
+#Health
+GET     /api/health     com.radovan.play.controllers.HealthController.healthCheck(request:Request)
+

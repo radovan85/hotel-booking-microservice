@@ -15,7 +15,7 @@ public class NatsUtils {
 	@PostConstruct
 	public void init() {
 		try {
-			this.nc = Nats.connect("nats://nats:4222");
+			this.nc = Nats.connect(System.getenv("NATS_URL"));
 			System.out.println("*** NATS connection has been established!");
 		} catch (Exception e) {
 			System.err.println("*** Error accessing NATS server!");

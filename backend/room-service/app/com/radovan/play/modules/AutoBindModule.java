@@ -3,7 +3,6 @@ package com.radovan.play.modules;
 import com.google.inject.AbstractModule;
 import com.radovan.play.brokers.RoomNatsListener;
 import com.radovan.play.brokers.RoomNatsSender;
-import com.radovan.play.config.ConsulClientRegistrationInitializer;
 import com.radovan.play.converter.TempConverter;
 import com.radovan.play.repositories.RoomCategoryRepository;
 import com.radovan.play.repositories.RoomRepository;
@@ -42,9 +41,7 @@ public class AutoBindModule extends AbstractModule {
         bind(RoomRepository.class).to(RoomRepositoryImpl.class).asEagerSingleton();
         bind(RoomCategoryService.class).to(RoomCategoryServiceImpl.class).asEagerSingleton();
         bind(RoomCategoryRepository.class).to(RoomCategoryRepositoryImpl.class).asEagerSingleton();
-        bind(ConsulRegistrationService.class).to(ConsulRegistrationServiceImpl.class).asEagerSingleton();
         bind(ConsulServiceDiscovery.class).to(ConsulServiceDiscoveryImpl.class).asEagerSingleton();
-        bind(ConsulClientRegistrationInitializer.class).asEagerSingleton();
         bind(ServiceUrlProvider.class).asEagerSingleton();
         bind(PublicKeyCache.class).asEagerSingleton();
         bind(JwtUtil.class).asEagerSingleton();

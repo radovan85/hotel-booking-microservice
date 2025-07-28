@@ -1,91 +1,60 @@
 package com.radovan.spring.services.impl;
 
-import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
+import java.util.Map;
+import java.util.Optional;
 
 import com.radovan.spring.services.ConsulServiceDiscovery;
-
-import org.springframework.http.*;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.ParameterizedTypeReference;
-
-import java.net.URI;
-import java.util.*;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 
 @Service
 public class ConsulServiceDiscoveryImpl implements ConsulServiceDiscovery {
 
-    private static final String CONSUL_BASE_URL = "http://consul:8500";
-    //private static final String SERVICE_CATALOG_URL = CONSUL_BASE_URL + "/v1/catalog/service/%s";
-    private static final String SERVICE_HEALTH_URL = CONSUL_BASE_URL + "/v1/health/service/%s?passing";
-    private static final String SERVICES_LIST_URL = CONSUL_BASE_URL + "/v1/catalog/services";
+	private static final String CONSUL_API_SERVICES_URL = "http://localhost:8500/v1/agent/services";
 
-    private RestTemplate restTemplate;
-    
-    
-    @Autowired
-    private void initialize(RestTemplate restTemplate) {
-		this.restTemplate = restTemplate;
-	}
+	@Autowired
+	private RestTemplate restTemplate;
 
 	@Override
-    public String getServiceUrl(String serviceName) {
-		logAvailableServices();
-        try {
-            // Preferiraj samo zdrave instance
-            String healthUrl = String.format(SERVICE_HEALTH_URL, serviceName);
+	public String getServiceUrl(String serviceName) {
+		try {
+			// Poziv ka Consul API-ju za dobijanje svih registrovanih servisa
+			ResponseEntity<Map<String, Map<String, Object>>> response = restTemplate.getForEntity(
+					CONSUL_API_SERVICES_URL, (Class<Map<String, Map<String, Object>>>) (Object) Map.class);
 
-            ResponseEntity<List<Map<String, Object>>> response = restTemplate.exchange(
-                URI.create(healthUrl),
-                HttpMethod.GET,
-                null,
-                new ParameterizedTypeReference<>() {}
-            );
+			// Provera da li postoji odgovor
+			Map<String, Map<String, Object>> services = response.getBody();
+			if (services == null || services.isEmpty()) {
+				throw new RuntimeException("No services found in Consul registry");
+			}
 
-            List<Map<String, Object>> serviceEntries = response.getBody();
+			// Pretraga servisa po imenu
+			Optional<Map.Entry<String, Map<String, Object>>> serviceEntry = services.entrySet().stream()
+					.filter(entry -> serviceName.equals(entry.getValue().get("Service"))) // Consul koristi ključ
+																							// "Service" za ime servisa
+					.findFirst();
 
-            if (serviceEntries == null || serviceEntries.isEmpty()) {
-                throw new RuntimeException("No healthy instances found for service: " + serviceName);
-            }
+			if (serviceEntry.isEmpty()) {
+				throw new RuntimeException("Service not found: " + serviceName);
+			}
 
-            Map<String, Object> service = (Map<String, Object>) serviceEntries.get(0).get("Service");
+			// Dohvatanje adrese i porta registrovanog servisa
+			Map<String, Object> serviceDetails = serviceEntry.get().getValue();
+			String address = (String) serviceDetails.get("Address");
+			Integer port = (Integer) serviceDetails.get("Port");
 
-            String address = (String) service.get("Address");
-            Integer port = (Integer) service.get("Port");
+			if (address == null || port == null) {
+				throw new RuntimeException("Invalid service details for: " + serviceName);
+			}
 
-            if (address == null || port == null) {
-                throw new RuntimeException("Missing address or port for service: " + serviceName);
-            }
+			// Vraćanje URL-a servisa
+			return "http://" + address + ":" + port;
 
-            return String.format("http://%s:%d", address, port);
-
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            throw new RuntimeException("Failed to fetch service URL from Consul registry", ex);
-        }
-    }
-
-    /**
-     * Optional debug metoda: štampa sve dostupne servise iz Catalog-a
-     */
-    public void logAvailableServices() {
-        try {
-            ResponseEntity<Map<String, List<String>>> response = restTemplate.exchange(
-                URI.create(SERVICES_LIST_URL),
-                HttpMethod.GET,
-                null,
-                new ParameterizedTypeReference<>() {}
-            );
-
-            Map<String, List<String>> services = response.getBody();
-
-            System.out.println("=== Available Consul Services ===");
-            services.forEach((name, tags) -> {
-                System.out.println("- " + name + " [tags: " + String.join(", ", tags) + "]");
-            });
-        } catch (Exception e) {
-            System.err.println("Failed to fetch services list from Consul");
-            e.printStackTrace();
-        }
-    }
+		} catch (Exception e) {
+			e.printStackTrace();
+			throw new RuntimeException("Failed to fetch service URL from Consul registry", e);
+		}
+	}
 }

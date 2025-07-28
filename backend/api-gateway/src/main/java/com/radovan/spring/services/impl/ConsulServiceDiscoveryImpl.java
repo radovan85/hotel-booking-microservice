@@ -31,6 +31,7 @@ public class ConsulServiceDiscoveryImpl implements ConsulServiceDiscovery {
 	@Override
     public String getServiceUrl(String serviceName) {
         try {
+        	logAvailableServices();
             // Preferiraj samo zdrave instance
             String healthUrl = String.format(SERVICE_HEALTH_URL, serviceName);
 
